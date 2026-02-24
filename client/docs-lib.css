@@ -1,0 +1,305 @@
+/* ===== DOCS LIB STYLES ===== */
+
+html, body.bespoke {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Two-column layout: doc list sidebar | document viewer */
+.bespoke .docs-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  height: calc(100vh - 42px);
+  overflow: hidden;
+}
+
+/* ===== SIDEBAR ===== */
+
+.bespoke .docs-sidebar {
+  border-right: 1px solid var(--Colors-Stroke-Default);
+  background: var(--Colors-Backgrounds-Main-Default);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.bespoke .docs-sidebar-header {
+  padding: var(--UI-Spacing-spacing-ms) var(--UI-Spacing-spacing-ml);
+  border-bottom: 1px solid var(--Colors-Stroke-Default);
+}
+
+.bespoke .docs-sidebar-title {
+  margin: 0;
+  font: var(--Fonts-Body-Strong-md);
+  color: var(--Colors-Text-Body-Strongest);
+}
+
+.bespoke .docs-file-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.bespoke .docs-file-item {
+  display: flex;
+  align-items: center;
+  gap: var(--UI-Spacing-spacing-ms);
+  padding: var(--UI-Spacing-spacing-ms) var(--UI-Spacing-spacing-ml);
+  border: none;
+  border-bottom: 1px solid var(--Colors-Stroke-Default);
+  background: none;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.bespoke .docs-file-item:hover {
+  background: var(--Colors-Backgrounds-Main-Top);
+}
+
+.bespoke .docs-file-item.active {
+  background: var(--Colors-Primary-Default);
+}
+
+.bespoke .docs-file-item.active .docs-file-name,
+.bespoke .docs-file-item.active .docs-file-meta {
+  color: var(--Colors-Text-On-Primary);
+}
+
+.bespoke .docs-file-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  width: 28px;
+  text-align: center;
+}
+
+.bespoke .docs-file-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.bespoke .docs-file-name {
+  font: var(--Fonts-Body-Strong-sm);
+  color: var(--Colors-Text-Body-Strongest);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bespoke .docs-file-meta {
+  font: var(--Fonts-Body-Default-xs);
+  color: var(--Colors-Text-Body-Light);
+  margin-top: 1px;
+}
+
+/* ===== DOCUMENT VIEWER ===== */
+
+.bespoke .docs-viewer {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.bespoke .docs-viewer-header {
+  padding: var(--UI-Spacing-spacing-ms) var(--UI-Spacing-spacing-mxl);
+  border-bottom: 1px solid var(--Colors-Stroke-Default);
+  background: var(--Colors-Backgrounds-Main-Top);
+  display: flex;
+  align-items: center;
+  gap: var(--UI-Spacing-spacing-ml);
+}
+
+.bespoke .docs-viewer-title {
+  font: var(--Fonts-Body-Strong-md);
+  color: var(--Colors-Text-Body-Strongest);
+  flex: 1;
+}
+
+.bespoke .docs-viewer-body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  background: var(--Colors-Backgrounds-Main-Default);
+}
+
+.bespoke .docs-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  color: var(--Colors-Text-Body-Light);
+  font: var(--Fonts-Body-Default-md);
+}
+
+/* The document "page" */
+.bespoke .docs-page {
+  max-width: 720px;
+  width: 100%;
+  padding: var(--UI-Spacing-spacing-mxl) var(--UI-Spacing-spacing-max);
+  color: var(--Colors-Text-Body-Default);
+  line-height: 1.7;
+}
+
+.bespoke .docs-page h1 {
+  font: var(--Fonts-Body-Strong-lg);
+  color: var(--Colors-Text-Body-Strongest);
+  margin: 0 0 var(--UI-Spacing-spacing-s) 0;
+}
+
+.bespoke .docs-page h2 {
+  font: var(--Fonts-Body-Strong-md);
+  color: var(--Colors-Text-Body-Strongest);
+  margin: var(--UI-Spacing-spacing-ml) 0 var(--UI-Spacing-spacing-s) 0;
+}
+
+.bespoke .docs-page p {
+  margin: 0 0 var(--UI-Spacing-spacing-ms) 0;
+  font: var(--Fonts-Body-Default-md);
+}
+
+.bespoke .docs-page ul, .bespoke .docs-page ol {
+  margin: 0 0 var(--UI-Spacing-spacing-ms) 0;
+  padding-left: var(--UI-Spacing-spacing-mxl);
+}
+
+.bespoke .docs-page li {
+  margin-bottom: var(--UI-Spacing-spacing-xs);
+  font: var(--Fonts-Body-Default-md);
+}
+
+/* Status table */
+.bespoke .docs-status-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--UI-Spacing-spacing-ms) 0 var(--UI-Spacing-spacing-ml) 0;
+}
+
+.bespoke .docs-status-table th,
+.bespoke .docs-status-table td {
+  padding: var(--UI-Spacing-spacing-s) var(--UI-Spacing-spacing-ms);
+  text-align: left;
+  border-bottom: 1px solid var(--Colors-Stroke-Default);
+  font: var(--Fonts-Body-Default-sm);
+}
+
+.bespoke .docs-status-table th {
+  font: var(--Fonts-Body-Strong-sm);
+  color: var(--Colors-Text-Body-Strongest);
+  background: var(--Colors-Backgrounds-Main-Top);
+}
+
+.bespoke .status-ready {
+  color: var(--Colors-Base-Success-600);
+  font-weight: 600;
+}
+
+.bespoke .status-pending {
+  color: var(--Colors-Base-Warning-600);
+  font-weight: 600;
+}
+
+.bespoke .status-notified {
+  color: var(--Colors-Base-Primary-600);
+  font-weight: 600;
+}
+
+/* Commentable sections */
+.bespoke .docs-commentable {
+  position: relative;
+  padding: var(--UI-Spacing-spacing-xs) var(--UI-Spacing-spacing-s);
+  margin: 0 calc(-1 * var(--UI-Spacing-spacing-s));
+  border-radius: var(--UI-Radius-radius-s);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.bespoke .docs-commentable:hover {
+  background: var(--Colors-Backgrounds-Main-Top);
+}
+
+.bespoke .docs-commentable.has-comments {
+  border-left: 3px solid var(--Colors-Primary-Default);
+  padding-left: calc(var(--UI-Spacing-spacing-s) - 3px);
+}
+
+.bespoke .docs-comment-indicator {
+  position: absolute;
+  right: var(--UI-Spacing-spacing-s);
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--Colors-Primary-Default);
+  color: var(--Colors-Text-On-Primary);
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.bespoke .docs-commentable:hover .docs-comment-indicator,
+.bespoke .docs-commentable.has-comments .docs-comment-indicator {
+  opacity: 1;
+}
+
+/* Comment panel (inline, below the section) */
+.bespoke .docs-comment-panel {
+  margin-top: var(--UI-Spacing-spacing-s);
+  padding: var(--UI-Spacing-spacing-ms);
+  background: var(--Colors-Backgrounds-Main-Top);
+  border-radius: var(--UI-Radius-radius-s);
+  border: 1px solid var(--Colors-Stroke-Default);
+}
+
+.bespoke .docs-comment {
+  padding: var(--UI-Spacing-spacing-s) 0;
+  border-bottom: 1px solid var(--Colors-Stroke-Default);
+}
+
+.bespoke .docs-comment:last-of-type {
+  border-bottom: none;
+}
+
+.bespoke .docs-comment-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--UI-Spacing-spacing-s);
+  margin-bottom: 2px;
+}
+
+.bespoke .docs-comment-author {
+  font: var(--Fonts-Body-Strong-xs);
+  color: var(--Colors-Text-Body-Strongest);
+}
+
+.bespoke .docs-comment-time {
+  font: var(--Fonts-Body-Default-xs);
+  color: var(--Colors-Text-Body-Light);
+}
+
+.bespoke .docs-comment-text {
+  font: var(--Fonts-Body-Default-sm);
+  color: var(--Colors-Text-Body-Default);
+  line-height: 1.5;
+}
+
+.bespoke .docs-comment-form {
+  display: flex;
+  gap: var(--UI-Spacing-spacing-s);
+  margin-top: var(--UI-Spacing-spacing-s);
+}
+
+.bespoke .docs-comment-form .input {
+  flex: 1;
+  font-size: 13px;
+}
+
+.bespoke .docs-comment-form .button {
+  flex-shrink: 0;
+}
