@@ -200,11 +200,6 @@ html, body.bespoke {
   font-weight: 600;
 }
 
-.bespoke .status-notified {
-  color: var(--Colors-Base-Primary-600);
-  font-weight: 600;
-}
-
 /* Commentable sections */
 .bespoke .docs-commentable {
   position: relative;
