@@ -118,8 +118,7 @@ html, body.bespoke {
 .bespoke .docs-viewer-body {
   flex: 1;
   overflow-y: auto;
-  display: flex;
-  justify-content: center;
+  position: relative;
   background: var(--Colors-Backgrounds-Main-Default);
 }
 
@@ -135,9 +134,9 @@ html, body.bespoke {
 
 /* The document "page" */
 .bespoke .docs-page {
-  max-width: 720px;
+  max-width: 560px;
   width: 100%;
-  padding: var(--UI-Spacing-spacing-mxl) var(--UI-Spacing-spacing-max);
+  padding: var(--UI-Spacing-spacing-mxl) var(--UI-Spacing-spacing-ml) var(--UI-Spacing-spacing-mxl) var(--UI-Spacing-spacing-max);
   color: var(--Colors-Text-Body-Default);
   line-height: 1.7;
 }
@@ -190,16 +189,6 @@ html, body.bespoke {
   background: var(--Colors-Backgrounds-Main-Top);
 }
 
-.bespoke .status-ready {
-  color: var(--Colors-Base-Success-600);
-  font-weight: 600;
-}
-
-.bespoke .status-pending {
-  color: var(--Colors-Base-Warning-600);
-  font-weight: 600;
-}
-
 /* Commentable sections */
 .bespoke .docs-commentable {
   position: relative;
@@ -207,11 +196,45 @@ html, body.bespoke {
   margin: 0 calc(-1 * var(--UI-Spacing-spacing-s));
   border-radius: var(--UI-Radius-radius-s);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s, box-shadow 0.15s;
 }
 
 .bespoke .docs-commentable:hover {
   background: var(--Colors-Backgrounds-Main-Top);
+}
+
+/* Editing state */
+.bespoke .docs-commentable.editing {
+  background: var(--Colors-Backgrounds-Main-Top);
+  box-shadow: 0 0 0 2px var(--Colors-Primary-Default);
+  cursor: text;
+}
+
+.bespoke .docs-editable {
+  outline: none;
+  border-radius: 2px;
+  min-height: 1em;
+}
+
+.bespoke .docs-editable:focus {
+  background: var(--Colors-Backgrounds-Main-Default);
+}
+
+/* Edit indicator (pencil icon on hover) */
+.bespoke .docs-edit-indicator {
+  position: absolute;
+  right: -36px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: var(--Colors-Text-Body-Secondary);
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+
+.bespoke .docs-commentable:hover .docs-edit-indicator {
+  opacity: 0.7;
 }
 
 .bespoke .docs-commentable.has-comments {
@@ -219,9 +242,13 @@ html, body.bespoke {
   padding-left: calc(var(--UI-Spacing-spacing-s) - 3px);
 }
 
+.bespoke .docs-commentable.comment-active {
+  background: var(--Colors-Backgrounds-Main-Top);
+}
+
 .bespoke .docs-comment-indicator {
   position: absolute;
-  right: var(--UI-Spacing-spacing-s);
+  right: -60px;
   top: 50%;
   transform: translateY(-50%);
   background: var(--Colors-Primary-Default);
@@ -243,22 +270,24 @@ html, body.bespoke {
   opacity: 1;
 }
 
-/* Comment panel (inline, below the section) */
-.bespoke .docs-comment-panel {
-  margin-top: var(--UI-Spacing-spacing-s);
+/* Side comment panel */
+.bespoke .docs-side-comments {
+  position: absolute;
+  right: 15%;
+  width: 250px;
   padding: var(--UI-Spacing-spacing-ms);
   background: var(--Colors-Backgrounds-Main-Top);
   border-radius: var(--UI-Radius-radius-s);
   border: 1px solid var(--Colors-Stroke-Default);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  z-index: 5;
+  max-height: 300px;
+  overflow-y: auto;
+  transition: top 0.15s ease;
 }
 
 .bespoke .docs-comment {
   padding: var(--UI-Spacing-spacing-s) 0;
-  border-bottom: 1px solid var(--Colors-Stroke-Default);
-}
-
-.bespoke .docs-comment:last-of-type {
-  border-bottom: none;
 }
 
 .bespoke .docs-comment-header {
@@ -292,9 +321,18 @@ html, body.bespoke {
 
 .bespoke .docs-comment-form .input {
   flex: 1;
+  padding: var(--UI-Spacing-spacing-xs) var(--UI-Spacing-spacing-s);
   font-size: 13px;
 }
 
 .bespoke .docs-comment-form .button {
   flex-shrink: 0;
+}
+
+.bespoke .docs-side-comments .docs-comment-form {
+  flex-direction: column;
+}
+
+.bespoke .docs-side-comments .docs-comment-form .button {
+  align-self: flex-end;
 }

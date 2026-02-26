@@ -87,6 +87,8 @@ let documents = [];
 let activeDocId = null;
 let comments = {};
 let openCommentSectionId = null;
+let editingSectionId = null;
+let _clickTimer = null;
 let _abortController = null;
 let _context = {};
 
@@ -98,6 +100,11 @@ function loadData() {
     if (Number(savedVersion) === DATA_VERSION) {
       const savedComments = localStorage.getItem('docs-lib-comments');
       if (savedComments) comments = JSON.parse(savedComments);
+      const savedDocs = localStorage.getItem('docs-lib-documents');
+      if (savedDocs) {
+        documents = JSON.parse(savedDocs);
+        return;
+      }
     } else {
       comments = {};
       localStorage.setItem('docs-lib-version', String(DATA_VERSION));
@@ -107,6 +114,14 @@ function loadData() {
     comments = {};
   }
   documents = JSON.parse(JSON.stringify(DOCUMENTS));
+}
+
+function saveDocuments() {
+  try {
+    localStorage.setItem('docs-lib-documents', JSON.stringify(documents));
+  } catch (err) {
+    console.error('Failed to save documents:', err);
+  }
 }
 
 function saveComments() {
@@ -158,60 +173,68 @@ function renderSectionHtml(doc, section) {
   const sectionComments = getCommentsForSection(doc.id, section.id);
   const hasComments = sectionComments.length > 0;
   const isOpen = openCommentSectionId === section.id;
+  const isEditing = editingSectionId === section.id;
   const commentCount = sectionComments.length;
 
   let inner = '';
-  if (section.type === 'heading') {
-    inner = `<h2>${escapeHtml(section.content)}</h2>`;
-  } else if (section.type === 'paragraph') {
-    inner = `<p>${escapeHtml(section.content)}</p>`;
-  } else if (section.type === 'list') {
-    inner = `<ul>${section.items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
-  } else if (section.type === 'status-table') {
-    inner = `
-      <table class="docs-status-table">
-        <thead><tr><th>Milestone</th><th>Status</th></tr></thead>
-        <tbody>${section.rows.map(row => `
-          <tr>
-            <td>${escapeHtml(row.milestone)}</td>
-            <td class="${row.statusClass}">${escapeHtml(row.status)}</td>
-          </tr>
-        `).join('')}</tbody>
-      </table>
-    `;
+  if (isEditing) {
+    if (section.type === 'heading') {
+      inner = `<h2 contenteditable="true" class="docs-editable">${escapeHtml(section.content)}</h2>`;
+    } else if (section.type === 'paragraph') {
+      inner = `<p contenteditable="true" class="docs-editable">${escapeHtml(section.content)}</p>`;
+    } else if (section.type === 'list') {
+      inner = `<ul>${section.items.map(item => `<li contenteditable="true" class="docs-editable">${escapeHtml(item)}</li>`).join('')}</ul>`;
+    } else if (section.type === 'status-table') {
+      inner = `
+        <table class="docs-status-table">
+          <thead><tr><th>Milestone</th><th>Status</th></tr></thead>
+          <tbody>${section.rows.map(row => `
+            <tr>
+              <td contenteditable="true" class="docs-editable">${escapeHtml(row.milestone)}</td>
+              <td contenteditable="true" class="docs-editable ${row.statusClass}">${escapeHtml(row.status)}</td>
+            </tr>
+          `).join('')}</tbody>
+        </table>
+      `;
+    }
+  } else {
+    if (section.type === 'heading') {
+      inner = `<h2>${escapeHtml(section.content)}</h2>`;
+    } else if (section.type === 'paragraph') {
+      inner = `<p>${escapeHtml(section.content)}</p>`;
+    } else if (section.type === 'list') {
+      inner = `<ul>${section.items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
+    } else if (section.type === 'status-table') {
+      inner = `
+        <table class="docs-status-table">
+          <thead><tr><th>Milestone</th><th>Status</th></tr></thead>
+          <tbody>${section.rows.map(row => `
+            <tr>
+              <td>${escapeHtml(row.milestone)}</td>
+              <td class="${row.statusClass}">${escapeHtml(row.status)}</td>
+            </tr>
+          `).join('')}</tbody>
+        </table>
+      `;
+    }
   }
 
+  const editIcon = `<span class="docs-edit-indicator" title="Double-click to edit">&#9998;</span>`;
   const indicator = `<span class="docs-comment-indicator">${commentCount || '+'}</span>`;
 
-  let commentPanel = '';
-  if (isOpen) {
-    const commentListHtml = sectionComments.map(c => `
-      <div class="docs-comment">
-        <div class="docs-comment-header">
-          <span class="docs-comment-author">${escapeHtml(c.author)}</span>
-          <span class="docs-comment-time">${c.time}</span>
-        </div>
-        <div class="docs-comment-text">${escapeHtml(c.text)}</div>
-      </div>
-    `).join('');
-
-    commentPanel = `
-      <div class="docs-comment-panel" data-section-id="${section.id}">
-        ${commentListHtml}
-        <form class="docs-comment-form" data-section-id="${section.id}">
-          <input type="text" class="input" placeholder="Add a comment..." autocomplete="off" />
-          <button type="submit" class="button button-primary">Post</button>
-        </form>
-      </div>
-    `;
-  }
+  const classes = [
+    'docs-commentable',
+    hasComments ? 'has-comments' : '',
+    isEditing ? 'editing' : '',
+    isOpen ? 'comment-active' : '',
+  ].filter(Boolean).join(' ');
 
   return `
-    <div class="docs-commentable ${hasComments ? 'has-comments' : ''}" data-section-id="${section.id}">
+    <div class="${classes}" data-section-id="${section.id}">
       ${inner}
-      ${indicator}
+      ${isEditing ? '' : editIcon}
+      ${isEditing ? '' : indicator}
     </div>
-    ${commentPanel}
   `;
 }
 
@@ -237,6 +260,118 @@ function renderDocument() {
   `;
 }
 
+function renderSideComments() {
+  const viewerBody = document.getElementById('docs-viewer-body');
+  let panel = viewerBody.querySelector('.docs-side-comments');
+
+  if (!openCommentSectionId || !activeDocId || editingSectionId) {
+    if (panel) panel.remove();
+    return;
+  }
+
+  const section = document.querySelector(`.docs-commentable[data-section-id="${openCommentSectionId}"]`);
+  if (!section) {
+    if (panel) panel.remove();
+    return;
+  }
+
+  const sectionComments = getCommentsForSection(activeDocId, openCommentSectionId);
+  const commentListHtml = sectionComments.map(c => `
+    <div class="docs-comment">
+      <div class="docs-comment-header">
+        <span class="docs-comment-author">${escapeHtml(c.author)}</span>
+        <span class="docs-comment-time">${c.time}</span>
+      </div>
+      <div class="docs-comment-text">${escapeHtml(c.text)}</div>
+    </div>
+  `).join('');
+
+  const html = `
+    ${commentListHtml}
+    <form class="docs-comment-form" data-section-id="${openCommentSectionId}">
+      <input type="text" class="input" placeholder="Add a comment..." autocomplete="off" />
+      <button type="submit" class="button button-primary">Post</button>
+    </form>
+  `;
+
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.className = 'docs-side-comments';
+    viewerBody.appendChild(panel);
+  }
+  panel.innerHTML = html;
+  positionSidePanel();
+}
+
+function positionSidePanel() {
+  const viewerBody = document.getElementById('docs-viewer-body');
+  const panel = viewerBody?.querySelector('.docs-side-comments');
+  if (!panel || !openCommentSectionId) return;
+
+  const section = document.querySelector(`.docs-commentable[data-section-id="${openCommentSectionId}"]`);
+  if (!section) return;
+
+  const bodyRect = viewerBody.getBoundingClientRect();
+  const sectionRect = section.getBoundingClientRect();
+  const top = sectionRect.top - bodyRect.top + viewerBody.scrollTop;
+  panel.style.top = `${top}px`;
+}
+
+function startEditing(sectionId) {
+  if (editingSectionId === sectionId) return;
+  if (editingSectionId) commitEdit(editingSectionId);
+  editingSectionId = sectionId;
+  openCommentSectionId = null;
+  renderDocument();
+  renderSideComments();
+
+  const el = document.querySelector(`.docs-commentable[data-section-id="${sectionId}"] .docs-editable`);
+  if (el) {
+    el.focus();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+}
+
+function commitEdit(sectionId) {
+  if (!activeDocId || !sectionId) return;
+  const doc = documents.find(d => d.id === activeDocId);
+  if (!doc) return;
+  const section = doc.sections.find(s => s.id === sectionId);
+  if (!section) return;
+
+  const wrapper = document.querySelector(`.docs-commentable[data-section-id="${sectionId}"]`);
+  if (!wrapper) return;
+
+  if (section.type === 'heading' || section.type === 'paragraph') {
+    const el = wrapper.querySelector('[contenteditable]');
+    if (el) section.content = el.textContent.trim();
+  } else if (section.type === 'list') {
+    const items = wrapper.querySelectorAll('li[contenteditable]');
+    section.items = Array.from(items).map(li => li.textContent.trim()).filter(t => t);
+  } else if (section.type === 'status-table') {
+    const rows = wrapper.querySelectorAll('tbody tr');
+    rows.forEach((tr, i) => {
+      if (!section.rows[i]) return;
+      const cells = tr.querySelectorAll('td[contenteditable]');
+      if (cells[0]) section.rows[i].milestone = cells[0].textContent.trim();
+      if (cells[1]) section.rows[i].status = cells[1].textContent.trim();
+    });
+  }
+
+  editingSectionId = null;
+  saveDocuments();
+}
+
+function cancelEdit() {
+  editingSectionId = null;
+  renderDocument();
+}
+
 function selectDocument(docId) {
   activeDocId = docId;
   openCommentSectionId = null;
@@ -245,12 +380,21 @@ function selectDocument(docId) {
 }
 
 function toggleCommentSection(sectionId) {
-  openCommentSectionId = openCommentSectionId === sectionId ? null : sectionId;
-  renderDocument();
+  document.querySelectorAll('.docs-commentable.comment-active').forEach(el => el.classList.remove('comment-active'));
+
+  if (openCommentSectionId === sectionId) {
+    openCommentSectionId = null;
+  } else {
+    openCommentSectionId = sectionId;
+    const el = document.querySelector(`.docs-commentable[data-section-id="${sectionId}"]`);
+    if (el) el.classList.add('comment-active');
+  }
+
+  renderSideComments();
 
   if (openCommentSectionId) {
-    const form = document.querySelector(`.docs-comment-form[data-section-id="${sectionId}"] input`);
-    if (form) form.focus();
+    const input = document.querySelector('.docs-side-comments .docs-comment-form input');
+    if (input) input.focus();
   }
 }
 
@@ -268,26 +412,85 @@ export function init(context = {}) {
     if (item) selectDocument(item.dataset.docId);
   }, { signal });
 
-  document.getElementById('docs-viewer-body').addEventListener('click', (e) => {
+  const viewerBody = document.getElementById('docs-viewer-body');
+
+  viewerBody.addEventListener('click', (e) => {
+    if (e.target.closest('[contenteditable]')) return;
     const commentable = e.target.closest('.docs-commentable');
+    if (commentable && commentable.classList.contains('editing')) return;
+    if (editingSectionId) {
+      commitEdit(editingSectionId);
+      renderDocument();
+      return;
+    }
     if (commentable && !e.target.closest('.docs-comment-panel')) {
-      toggleCommentSection(commentable.dataset.sectionId);
+      const sectionId = commentable.dataset.sectionId;
+      if (_clickTimer) clearTimeout(_clickTimer);
+      _clickTimer = setTimeout(() => {
+        _clickTimer = null;
+        toggleCommentSection(sectionId);
+      }, 250);
     }
   }, { signal });
 
-  document.getElementById('docs-viewer-body').addEventListener('submit', (e) => {
+  viewerBody.addEventListener('dblclick', (e) => {
+    if (_clickTimer) { clearTimeout(_clickTimer); _clickTimer = null; }
+    if (e.target.closest('.docs-comment-panel')) return;
+    const commentable = e.target.closest('.docs-commentable');
+    if (!commentable) return;
+    e.preventDefault();
+    startEditing(commentable.dataset.sectionId);
+  }, { signal });
+
+  viewerBody.addEventListener('focusout', (e) => {
+    if (!editingSectionId) return;
+    const wrapper = document.querySelector(`.docs-commentable[data-section-id="${editingSectionId}"]`);
+    if (!wrapper) return;
+    setTimeout(() => {
+      if (!wrapper.contains(document.activeElement)) {
+        commitEdit(editingSectionId);
+        renderDocument();
+      }
+    }, 0);
+  }, { signal });
+
+  viewerBody.addEventListener('keydown', (e) => {
+    if (!editingSectionId) return;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      cancelEdit();
+      return;
+    }
+    if (e.key === 'Enter' && !e.shiftKey) {
+      const doc = documents.find(d => d.id === activeDocId);
+      const section = doc?.sections.find(s => s.id === editingSectionId);
+      if (section && (section.type === 'heading' || section.type === 'status-table')) {
+        e.preventDefault();
+        commitEdit(editingSectionId);
+        renderDocument();
+      }
+    }
+  }, { signal });
+
+  viewerBody.addEventListener('submit', (e) => {
     e.preventDefault();
     const form = e.target.closest('.docs-comment-form');
     if (!form) return;
     const input = form.querySelector('input');
     const text = input.value.trim();
     if (!text || !activeDocId) return;
-    addComment(activeDocId, form.dataset.sectionId, text);
+    const sectionId = form.dataset.sectionId;
+    addComment(activeDocId, sectionId, text);
     renderDocument();
+    renderSideComments();
     if (_context.emit) {
-      _context.emit('doc:comment-added', { docId: activeDocId, sectionId: form.dataset.sectionId, text });
+      _context.emit('doc:comment-added', { docId: activeDocId, sectionId, text });
     }
   }, { signal });
+
+  viewerBody.addEventListener('scroll', () => {
+    positionSidePanel();
+  }, { signal, passive: true });
 
   if (documents.length === 1) {
     selectDocument(documents[0].id);
@@ -303,6 +506,7 @@ export function destroy() {
   activeDocId = null;
   comments = {};
   openCommentSectionId = null;
+  editingSectionId = null;
 }
 
 export function onAction(action) {
@@ -311,7 +515,7 @@ export function onAction(action) {
     const docId = p.docId || (documents[0] && documents[0].id);
     if (!docId || !p.sectionId) return;
     addComment(docId, p.sectionId, p.text || '', p.author || 'System');
-    if (activeDocId === docId) renderDocument();
+    if (activeDocId === docId) { renderDocument(); renderSideComments(); }
   } else if (action.type === 'update-status') {
     const p = action.payload || {};
     const docId = p.docId || (documents[0] && documents[0].id);
@@ -323,7 +527,7 @@ export function onAction(action) {
     if (row) {
       row.status = p.newStatus || row.status;
       row.statusClass = p.newStatusClass || row.statusClass;
-      if (activeDocId === docId) renderDocument();
+      if (activeDocId === docId) { renderDocument(); renderSideComments(); }
     }
   }
 }
