@@ -274,14 +274,14 @@ html, body.bespoke {
 .bespoke .docs-side-comments {
   position: absolute;
   right: 15%;
-  width: 250px;
+  width: 360px;
   padding: var(--UI-Spacing-spacing-ms);
   background: var(--Colors-Backgrounds-Main-Top);
   border-radius: var(--UI-Radius-radius-s);
   border: 1px solid var(--Colors-Stroke-Default);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   z-index: 5;
-  max-height: 300px;
+  max-height: 460px;
   overflow-y: auto;
   transition: top 0.15s ease;
 }
